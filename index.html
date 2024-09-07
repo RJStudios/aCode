@@ -1,3 +1,579 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:cc2cec36fecec3514e0f94ba5f5e0f563ba2d720df6f3af88579f11031a98c56
-size 17456
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>aCode</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/material-darker.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> 
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/show-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/javascript-hint.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/esprima/4.0.1/esprima.min.js"></script>
+
+    <style>
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'JetBrains Mono', monospace;
+            background-color: #1e1e1e;
+            color: #c7c7c7;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        h1, p {
+            margin: 0;
+            padding: 0;
+            color: #00aaff;
+            text-shadow: 0 0 5px rgba(0, 170, 255, 0.5);
+        }
+
+        h1 {
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        p {
+            text-align: center;
+            font-size: 14px;
+            color: #a0a0a0;
+            text-shadow: 0 0 5px rgba(160, 160, 160, 0.5);
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100% - 50px);
+            overflow: hidden;
+        }
+
+        .editor-container {
+            flex: 1;
+            background-color: #1b1e23;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            margin: 10px;
+            overflow: hidden;
+        }
+
+        #editor {
+            height: calc(100% - 30px);
+            border: none;
+            outline: none;
+            background-color: #282c34;
+            color: #c7c7c7;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 800;
+            font-size: 14px;
+            border-radius: 12px;
+            overflow: auto; 
+            word-wrap: break-word; 
+        }
+
+        .editor-container {
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .editor-buttons {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 10px;
+            background-color: #282c34;
+            border-top: 1px solid #444;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+.editor-buttons button {
+    background-color: #282c34;
+    color: #c7c7c7;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.editor-buttons button i {
+    font-size: 14px;
+}
+
+.editor-buttons button:hover {
+    background-color: #444;
+}
+
+.editor-buttons button:active {
+    background-color: #333;
+}
+
+.editor-buttons .small-button {
+    padding: 5px 7.5px;
+    font-size: 12px;
+}
+
+.fixed-buttons {
+    position: fixed;
+    bottom: 10px;
+    right: 10px; 
+    display: flex;
+    gap: 10px;
+    z-index: 20;
+}
+
+        .crash-button {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            background-color: #ff4d4d;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .crash-button i {
+            font-size: 16px;
+        }
+
+        .crash-button:hover {
+            background-color: #cc0000;
+        }
+
+        .crash-button:active {
+            background-color: #990000;
+        }
+
+        .CodeMirror span.cm-comment {
+            color: #888;
+        }
+
+        .preview-container {
+            display: none;
+        }
+		
+.find-replace {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 5px;
+}
+
+.find-replace input {
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    background-color: #282c34;
+    color: #c7c7c7;
+    outline: none;
+    width: 200px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+}
+
+/* Optional placeholder style */
+.optional-placeholder::placeholder {
+    color: #888;
+    font-style: italic;
+}
+
+.find-replace button {
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: none;
+    background-color: #00aaff;
+    color: white;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+.find-replace button:hover {
+    background-color: #007acc;
+}
+
+.notification {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    background-color: #ff4d4d;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    z-index: 1000;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+}
+
+    </style>
+</head>
+<body>
+    <h1>aCode</h1>
+    <p>v2 - Made with â¤ï¸ by Avery</p>
+    <div class="container">
+        <div class="editor-container">
+            <textarea id="editor"></textarea>
+			
+			
+            <div class="editor-buttons">
+                <button onclick="openFile()"><i class="fas fa-folder-open"></i> Open File</button>
+                <button onclick="saveFile()"><i class="fas fa-save"></i> Save File</button>
+                <button onclick="clearEditor()"><i class="fas fa-eraser"></i> Clear Editor</button>
+                <button class="small-button" onclick="undo()"><i class="fas fa-undo"></i> Undo</button>
+                <button class="small-button" onclick="redo()"><i class="fas fa-redo"></i> Redo</button>
+                <button onclick="commentCode()"><i class="fas fa-comment"></i> Comment Code</button>
+                <button onclick="increaseFontSize()"><i class="fas fa-font"></i> Increase Font Size</button>
+        <button onclick="decreaseFontSize()"><i class="fas fa-font"></i> Decrease Font Size</button>
+        <button onclick="duplicateLine()"><i class="fas fa-copy"></i> Duplicate Line</button>
+        <button onclick="undoAll()"><i class="fas fa-undo-alt"></i> Undo All</button>
+        <button onclick="redoAll()"><i class="fas fa-redo-alt"></i> Redo All</button>
+        <button onclick="exportCode()"><i class="fas fa-download"></i> Export Code</button>	
+
+            </div>
+        </div>
+    </div>
+
+    <div class="fixed-buttons">
+        <button class="crash-button" onclick="crashApp()"><i class="fas fa-bomb"></i> Alt+F4</button>
+    </div>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/show-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/javascript-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prettier/2.8.4/standalone.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prettier/2.8.4/parser-babel.js"></script>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+
+        const editor = CodeMirror.fromTextArea(document.getElementById('editor'), {
+            mode: "javascript",
+            lineNumbers: true,
+            autoCloseBrackets: true,
+            matchBrackets: true,
+            theme: 'material-darker',
+            tabSize: 4,
+            indentWithTabs: true,
+            lineWrapping: true,
+            foldGutter: true,
+            gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+            extraKeys: { "Ctrl-Space": "autocomplete" }
+        });
+
+        window.addEventListener('resize', resizeEditor);
+        resizeEditor();
+
+        function resizeEditor() {
+            const editorContainer = document.querySelector('.editor-container');
+            editorContainer.style.height = `${window.innerHeight - 50}px`;
+            editor.setSize("100%", "100%");
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if (e.ctrlKey && (e.key === '=' || e.key === '+')) {
+                e.preventDefault();
+                zoomInEditor();
+            } else if (e.altKey && e.key === 'F4') {
+                e.preventDefault();
+                crashApp();
+            }
+        });
+
+
+        function zoomInEditor() {
+            currentFontSize += 2;
+            editor.getWrapperElement().style.fontSize = currentFontSize + 'px';
+            editor.refresh();
+        }
+
+        async function openFile() {
+            const result = await ipcRenderer.invoke('open-file');
+            if (result) {
+                editor.setValue(result.data);
+                editor.setOption('mode', getModeFromFile(result.filePath));
+            }
+        }
+
+        async function saveFile() {
+            const content = editor.getValue();
+            const filePath = await ipcRenderer.invoke('create-file');
+            if (filePath) {
+                await ipcRenderer.invoke('save-file', { filePath, content });
+            }
+        }
+
+        function clearEditor() {
+            editor.setValue('');
+        }
+
+        function undo() {
+            editor.undo();
+        }
+
+        function redo() {
+            editor.redo();
+        }
+
+        function crashApp() {
+            ipcRenderer.send('crash-app');
+        }
+
+        function getModeFromFile(filePath) {
+            const ext = filePath.split('.').pop();
+            switch (ext) {
+                case 'js':
+                    return 'javascript';
+                case 'html':
+                    return 'htmlmixed';
+                case 'css':
+                    return 'css';
+                default:
+                    return 'plaintext';
+            }
+        }
+
+        function commentCode() {
+            const selectedText = editor.getSelection();
+            const commentedText = selectedText.split('\n').map(line => `// ${line}`).join('\n');
+            editor.replaceSelection(commentedText);
+        }
+
+function checkErrors() {
+            const code = editor.getValue();
+
+
+            if (/print\s*\(.*\)/.test(code) || /console\.log\s*\(.*\)/.test(code)) {
+                showNotification("Warning: The code contains non-JavaScript syntax or potential issues!");
+                return;
+            }
+
+            try {
+
+                esprima.parseScript(code);
+                showNotification("No syntax errors found!");
+            } catch (e) {
+                showNotification("Syntax Error: " + e.message);
+            }
+        }
+
+
+function findText() {
+    const query = document.getElementById('findInput').value;
+    if (query) {
+        const cursor = editor.getSearchCursor(query);
+        if (cursor.findNext()) {
+            editor.setSelection(cursor.from(), cursor.to());
+        } else {
+            alert('No matches found!');
+        }
+    } else {
+        alert('Please enter text to find.');
+    }
+}
+
+function replaceText() {
+    const query = document.getElementById('findInput').value;
+    const replace = document.getElementById('replaceInput').value;
+
+    if (query) {
+        const cursor = editor.getSearchCursor(query);
+        let replaced = false;
+
+        while (cursor.findNext()) {
+            cursor.replace(replace);
+            replaced = true;
+        }
+
+        if (replaced) {
+            alert('All occurrences replaced.');
+        } else {
+            alert('No matches found to replace.');
+        }
+    } else {
+        alert('Please enter text to find.');
+    }
+}
+
+
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000); 
+        }
+function checkErrors() {
+    try {
+        new Function(editor.getValue()); 
+        showNotification("No syntax errors found!");
+    } catch (error) {
+        showNotification("Error: " + error.message);
+    }
+}
+
+function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'notification';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        document.body.removeChild(notification);
+    }, 3000);
+}
+
+const { exec } = require('child_process');
+
+function gitCommit(message) {
+    exec(`git commit -m "${message}"`, (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Error: ${error.message}`);
+            return;
+        }
+        if (stderr) {
+            console.error(`stderr: ${stderr}`);
+            return;
+        }
+        console.log(`stdout: ${stdout}`);
+        showNotification("Committed successfully!");
+    });
+}
+
+function gitPush() {
+    exec('git push', (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Error: ${error.message}`);
+            return;
+        }
+        if (stderr) {
+            console.error(`stderr: ${stderr}`);
+            return;
+        }
+        console.log(`stdout: ${stdout}`);
+        showNotification("Pushed successfully!");
+    });
+}
+
+function gitPull() {
+    exec('git pull', (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Error: ${error.message}`);
+            return;
+        }
+        if (stderr) {
+            console.error(`stderr: ${stderr}`);
+            return;
+        }
+        console.log(`stdout: ${stdout}`);
+        showNotification("Pulled successfully!");
+    });
+}
+
+function minifyCode() {
+    const content = editor.getValue();
+    const minifiedContent = content.replace(/\s+/g, ' ').trim(); 
+    editor.setValue(minifiedContent);
+}
+function reformatCode() {
+    const content = editor.getValue();
+    // Use Prettier to reformat the code
+    const formattedContent = prettier.format(content, { parser: 'babel' }); 
+    editor.setValue(formattedContent);
+}
+let highlightingEnabled = true;
+
+function toggleCodeHighlighting() {
+    highlightingEnabled = !highlightingEnabled;
+    editor.getWrapperElement().style.backgroundColor = highlightingEnabled ? '#282c34' : '#f5f5f5';
+    editor.getWrapperElement().style.color = highlightingEnabled ? '#c7c7c7' : '#000';
+}
+let currentFontSize = 14;
+
+function increaseFontSize() {
+    currentFontSize += 2;
+    editor.getWrapperElement().style.fontSize = currentFontSize + 'px';
+    editor.refresh();
+}
+
+function decreaseFontSize() {
+    currentFontSize = Math.max(10, currentFontSize - 2);
+    editor.getWrapperElement().style.fontSize = currentFontSize + 'px';
+    editor.refresh();
+}
+
+function duplicateLine() {
+    const cursor = editor.getCursor();
+    const line = editor.getLine(cursor.line);
+    editor.replaceRange(line + '\n' + line, { line: cursor.line, ch: 0 });
+}
+
+function deleteLine() {
+    const cursor = editor.getCursor();
+    editor.removeLine(cursor.line);
+}
+
+function selectAll() {
+    editor.execCommand('selectAll');
+}
+
+function undoAll() {
+    editor.undoHistory = [];
+    editor.undo();
+}
+
+function redoAll() {
+    editor.redoHistory = [];
+    editor.redo();
+}
+
+function exportCode() {
+    const content = editor.getValue();
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'code.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+
+    </script>
+	
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/prettier/2.8.4/standalone.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prettier/2.8.4/parser-babel.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/ruby/ruby.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/eslint/8.15.0/eslint.min.js"></script>
+
+</body>
+</html>
